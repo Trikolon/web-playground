@@ -1,0 +1,21 @@
+{
+  "name": "simple-cloudflare-playground",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "npm run build && vite preview",
+    "deploy": "npm run build && wrangler deploy",
+    "cf-typegen": "wrangler types"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.11.2",
+    "@types/node": "^24.2.0",
+    "glob": "^11.0.3",
+    "vite": "^7.1.0",
+    "wrangler": "^4.28.1"
+  },
+  "packageManager": "pnpm@10.14.0"
+}
