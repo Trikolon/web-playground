@@ -6,7 +6,7 @@ You can set it up to publish on push to GitHub, or manually via `pnpm run publis
 For each request, it will:
 
 1. If the equivalent path is in `public`, it's served. Index files are served, e.g. `public/foo/index.html` will be served for requests to `/foo/`.
-2. Otherwise, if the request ends in `/`, and there's an equivalent route function (eg `/hello/` will check for `src/routes/hello/index.ts`), that function is called to get the response.
+2. Otherwise, if the request ends in `/`, and there's an equivalent route function (e.g. `/hello/` will check for `src/routes/hello/index.ts`), that function is called to get the response. `/hello` will also redirect to `/hello/`.
 3. Otherwise, 404.
 
 [`public/_headers`](https://developers.cloudflare.com/pages/configuration/headers/) and [`public/_redirects`](https://developers.cloudflare.com/pages/configuration/redirects/) are supported.
