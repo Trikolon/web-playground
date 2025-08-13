@@ -10,6 +10,10 @@
   "assets": {
     "directory": "./dist"
   },
+  "workers_dev": false,
+  "routes": [
+    { "pattern": "playground.emz.im/*", "zone_name": "emz.im" }
+  ],
   "observability": {
     "enabled": true
   }
