@@ -1,2 +1,5 @@
 /static-number/
   Access-Control-Allow-Origin: *
+
+/clear-site-data/
+  Clear-Site-Data: "*"
