@@ -9,4 +9,7 @@ export default defineConfig({
     }),
     publicIndexPlugin(),
   ],
+  server: {
+    allowedHosts: ["example.com", "example.org"],
+  },
 });
