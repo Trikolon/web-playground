@@ -1,47 +1,6 @@
 <!doctype html>
 <meta charset="UTF-8">
 <title>Disqus Comment Embed</title>
-<style>
-    :root {
-        color-scheme: light dark;
-    }
-
-    body {
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-        margin: 2rem;
-        line-height: 1.5;
-    }
-
-    .wrap {
-        max-width: 800px;
-        margin: 0 auto;
-    }
-
-    header {
-        margin-bottom: 1rem;
-    }
-
-    .note {
-        font-size: .95rem;
-        opacity: .8;
-    }
-
-    .box {
-        border: 1px solid color-mix(in srgb, CanvasText 15%, Canvas 85%);
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-    }
-
-    a {
-        color: LinkText;
-    }
-
-    code {
-        background: color-mix(in srgb, CanvasText 10%, Canvas 90%);
-        padding: 0 .25rem;
-        border-radius: .25rem;
-    }
-</style>
 </head>
 
 <body>
@@ -70,7 +29,7 @@
         
         // IMPORTANT: Replace EXAMPLE with your forum shortname!
         s.src = 'https://newser.disqus.com/embed.js';
-        
+
         s.setAttribute('data-timestamp', +new Date());
         (d.head || d.body).appendChild(s);
     })();
