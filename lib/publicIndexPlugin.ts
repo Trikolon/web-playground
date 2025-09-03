@@ -18,6 +18,13 @@ async function writeIfChanged(filePath: string | URL, content: string) {
   if (current !== content) await fs.writeFile(filePath, content);
 }
 
+async function getRepositoryUrl() {
+  // Load repo URL from package.json
+  const pkg = JSON.parse(await fs.readFile('./package.json', 'utf-8'));
+
+  return pkg.repository?.url?.replace(/^git\+/, '').replace(/\.git$/, '');
+}
+
 export function publicIndexPlugin(): Plugin {
   async function generateIndex() {
     const paths = [
@@ -58,6 +65,17 @@ export function publicIndexPlugin(): Plugin {
       )
       .join('\n');
 
+    let footer = "";
+    let repoUrl = await getRepositoryUrl();
+    // Only add a footer if we have the repository URL.
+    if(repoUrl) {
+      footer = dedent`
+        <footer>
+          Source: <a href="${repoUrl}">${repoUrl}</a>
+        </footer>
+      `;
+    }
+
     const html = dedent`
       <!DOCTYPE html>
       <meta charset="UTF-8">
@@ -66,6 +84,7 @@ export function publicIndexPlugin(): Plugin {
       <ul>
         ${links}
       </ul>
+      ${footer}
     `;
 
     const indexPath = new URL('../public/index.html', import.meta.url);
