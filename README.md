@@ -19,19 +19,17 @@ A root `/index.html` is generated, providing a list of top level URLs. Titles ar
 To install:
 
 ```sh
-pnpm i
+npm i
 ```
 
 To dev:
 
 ```sh
-pnpm run dev
+npm run dev
 ```
 
 To deploy, push to GitHub, or:
 
 ```sh
-pnpm run deploy
+npm run deploy
 ```
-
-I guess `npm` will work too.
