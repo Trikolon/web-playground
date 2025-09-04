@@ -3,7 +3,23 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 import { publicIndexPlugin } from "./lib/publicIndexPlugin";
 import fs from "fs";
 
-export default defineConfig({
+/**
+ * If cert and key are present use HTTPS, otherwise return undefined which makes
+ * vite default to http.
+ */
+function getHttpsConfig() {
+  try {
+    return {
+      key: fs.readFileSync(new URL('./certs/key.pem', import.meta.url)),
+      cert: fs.readFileSync(new URL('./certs/cert.pem', import.meta.url)),
+    };
+  } catch (e) {
+    console.info("Could not get cert and key, using http");
+    return undefined;
+  }
+}
+
+export default defineConfig(({ command }) => ({
   plugins: [
     cloudflare({
       experimental: { headersAndRedirectsDevModeSupport: true },
@@ -12,9 +28,8 @@ export default defineConfig({
   ],
   server: {
     allowedHosts: ["localhost", "example.com", "example.org", "example.net"],
-    https: {
-      key: fs.readFileSync(new URL('./certs/key.pem', import.meta.url)),
-      cert: fs.readFileSync(new URL('./certs/cert.pem', import.meta.url)),
-    }
+    // Only enable https if Vite is serving the files directly, e.g. when using
+    // "vite dev".
+    https: command == "serve" ? getHttpsConfig() : undefined,
   },
-});
+}));
