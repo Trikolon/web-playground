@@ -12,7 +12,8 @@
     "build": "vite build",
     "preview": "npm run build && vite preview",
     "deploy": "npm run build && wrangler deploy",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "gen-certs": "mkdir -p certs && mkcert -cert-file certs/cert.pem -key-file certs/key.pem example.com \"*.example.com\" example.org \"*.example.org\" example.net \"*.example.net\" localhost 127.0.0.1 ::1"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.11.2",
