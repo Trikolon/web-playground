@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Requests access to camera on click</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+</head>
+<body>
+    <h1>Requests access to camera on click</h1>
+    <p>This page requests access to the camera when the button is clicked.</p>
+    <button>Request Camera Access</button>
+    <video autoplay playsinline></video>
+    <script>
+        async function requestCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                document.querySelector('video').srcObject = stream;
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+            }
+        }
+        document.querySelector('button').addEventListener('click', requestCamera);
+    </script>
+</body>
+</html>
