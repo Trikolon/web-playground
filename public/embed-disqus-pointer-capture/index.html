@@ -1,0 +1,56 @@
+<!doctype html>
+<meta charset="UTF-8">
+<title>Disqus Comment Embed with a site capturing clicks.</title>
+</head>
+
+<body>
+    <p>
+        This site uses `setPointerCapture` to capture pointer events and thus
+        prevents clicks on the Disqus embed placeholder in Firefox. See
+        <a href="https://bugzil.la/1966696">Bug 1966696</a>.
+    </p>
+    <div id="disqus_thread"></div>
+    <script>
+        /**
+         *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT 
+         *  THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR 
+         *  PLATFORM OR CMS.
+         *  
+         *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: 
+         *  https://disqus.com/admin/universalcode/#configuration-variables
+         */
+
+        var disqus_config = function () {
+            // Replace PAGE_URL with your page's canonical URL variable
+            this.page.url = window.location.href;
+
+            // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+            this.page.identifier = window.location.pathname;
+        };
+
+
+        (function () {  // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
+            var d = document, s = d.createElement('script');
+
+            // IMPORTANT: Replace EXAMPLE with your forum shortname!
+            s.src = 'https://newser.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+
+        // Steal all the clicks.
+        window.addEventListener("pointerdown", (event) => {
+            event.target.setPointerCapture(event.pointerId);
+            // Will be released with `pointerup`.
+        })
+    </script>
+    <noscript>
+        Please enable JavaScript to view the
+        <a href="https://disqus.com/?ref_noscript" rel="nofollow">
+            comments powered by Disqus.
+        </a>
+    </noscript>
+</body>
+
+</html>
