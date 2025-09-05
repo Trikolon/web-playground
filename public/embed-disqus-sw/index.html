@@ -1,108 +1,135 @@
 <!doctype html>
-<meta charset="UTF-8">
-<title>Disqus Comment Embed with Service Worker cache</title>
-<style>
-    :root {
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Disqus Comment Embed with Service Worker cache</title>
+    <style>
+      :root {
         color-scheme: light dark;
-    }
+      }
 
-    body {
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial,
+          'Apple Color Emoji',
+          'Segoe UI Emoji';
         margin: 2rem;
         line-height: 1.5;
-    }
+      }
 
-    .wrap {
+      .wrap {
         max-width: 800px;
         margin: 0 auto;
-    }
+      }
 
-    header {
+      header {
         margin-bottom: 1rem;
-    }
+      }
 
-    .note {
-        font-size: .95rem;
-        opacity: .8;
-    }
+      .note {
+        font-size: 0.95rem;
+        opacity: 0.8;
+      }
 
-    .box {
+      .box {
         border: 1px solid color-mix(in srgb, CanvasText 15%, Canvas 85%);
         border-radius: 12px;
         padding: 1rem 1.25rem;
-    }
+      }
 
-    a {
+      a {
         color: LinkText;
-    }
+      }
 
-    code {
+      code {
         background: color-mix(in srgb, CanvasText 10%, Canvas 90%);
-        padding: 0 .25rem;
-        border-radius: .25rem;
-    }
-</style>
-</head>
+        padding: 0 0.25rem;
+        border-radius: 0.25rem;
+      }
+    </style>
+  </head>
 
-<body>
+  <body>
     <div class="wrap">
-        <header>
-            <h1>Disqus Comment Embed — Test Page</h1>
-            <p class="note">This page embeds the <strong>newser</strong> Disqus forum (<code>newser.disqus.com</code>).
-                For a production site, replace the forum shortname with your own.</p>
-        </header>
+      <header>
+        <h1>Disqus Comment Embed — Test Page</h1>
+        <p class="note">
+          This page embeds the <strong>newser</strong> Disqus forum
+          (<code>newser.disqus.com</code>). For a production site, replace the
+          forum shortname with your own.
+        </p>
+      </header>
 
-        <div class="box">
-            <h2>Discussion</h2>
-            <!-- Disqus injects the thread UI into this container -->
-            <div id="disqus_thread"></div>
-        </div>
+      <div class="box">
+        <h2>Discussion</h2>
+        <!-- Disqus injects the thread UI into this container -->
+        <div id="disqus_thread"></div>
+      </div>
 
-        <section class="note" style="margin-top:1rem">
-            <p>
-                If the thread doesn't load: the Disqus forum owner may restrict domains, or a content blocker might be
-                active. Try a different browser or disable blockers for this page.
-            </p>
-        </section>
+      <section class="note" style="margin-top: 1rem">
+        <p>
+          If the thread doesn't load: the Disqus forum owner may restrict
+          domains, or a content blocker might be active. Try a different browser
+          or disable blockers for this page.
+        </p>
+      </section>
     </div>
 
     <script>
-        /**
-        * Optional: Configure Disqus thread metadata for this test page.
-        * Disqus maps threads by <page.url, page.identifier>. Keep these stable.
-        */
-        var disqus_config = function () {
-            this.page.url = window.location.href.split('#')[0];
-            this.page.identifier = (location.pathname || 'index.html') + '#test';
-            this.page.title = document.title;
-        };
+      /**
+       * Optional: Configure Disqus thread metadata for this test page.
+       * Disqus maps threads by <page.url, page.identifier>. Keep these stable.
+       */
+      var disqus_config = function () {
+        this.page.url = window.location.href.split('#')[0];
+        this.page.identifier = (location.pathname || 'index.html') + '#test';
+        this.page.title = document.title;
+      };
 
-        // Register a service worker to intercept & cache Disqus scripts
-        (function registerSW() {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('./sw.js', { scope: './' })
-                    .catch(function (err) {
-                        console.warn('Service worker registration failed:', err);
-                    });
-            }
-        })();
+      // Register a service worker to intercept & cache Disqus scripts
+      (function registerSW() {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker
+            .register('./sw.js', { scope: './' })
+            .catch(function (err) {
+              console.warn('Service worker registration failed:', err);
+            });
+        }
+      })();
 
-        // Load Disqus after the SW is ready so it can cache the embed
-        (async function loadDisqus() {
-            if ('serviceWorker' in navigator) {
-                try { await navigator.serviceWorker.ready; } catch (e) { /* continue anyway */ }
-            }
-            var d = document, s = d.createElement('script');
-            s.src = 'https://newser.disqus.com/embed.js';
-            s.setAttribute('data-timestamp', Date.now().toString());
-            (d.head || d.body).appendChild(s);
-        })();
+      // Load Disqus after the SW is ready so it can cache the embed
+      (async function loadDisqus() {
+        if ('serviceWorker' in navigator) {
+          try {
+            await navigator.serviceWorker.ready;
+          } catch (e) {
+            /* continue anyway */
+          }
+        }
+        var d = document,
+          s = d.createElement('script');
+        s.src = 'https://newser.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', Date.now().toString());
+        (d.head || d.body).appendChild(s);
+      })();
     </script>
-    <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by
-            Disqus.</a></noscript>
+    <noscript
+      >Please enable JavaScript to view the
+      <a href="https://disqus.com/?ref_noscript"
+        >comments powered by Disqus.</a
+      ></noscript
+    >
 
     <!-- Optional: comment count script if you add links with data-disqus-identifier -->
-    <script id="dsq-count-scr" src="https://newser.disqus.com/count.js" async></script>
-</body>
-
+    <script
+      id="dsq-count-scr"
+      src="https://newser.disqus.com/count.js"
+      async
+    ></script>
+  </body>
 </html>

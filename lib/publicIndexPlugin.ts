@@ -37,12 +37,12 @@ export function publicIndexPlugin(): Plugin {
         paths.map(async (path) => {
           const dirName =
             /^(public|src\/routes)\/([^/]*)\/index\.(html|ts)$/.exec(
-              path
+              path,
             )?.[2]!;
 
           const fileContent = await fs.readFile(
             new URL('../' + path, import.meta.url),
-            'utf8'
+            'utf8',
           );
 
           const title = path.endsWith('.html')
@@ -50,7 +50,7 @@ export function publicIndexPlugin(): Plugin {
             : extractScriptTitle(fileContent);
 
           return [dirName, title];
-        })
+        }),
       )
     ).sort((a, b) => a[0].localeCompare(b[0]));
 
@@ -61,14 +61,14 @@ export function publicIndexPlugin(): Plugin {
             <a href="/${dirName}/">${dirName}</a>
             ${title && `- ${title}`}
           </li>
-        `
+        `,
       )
       .join('\n');
 
-    let footer = "";
+    let footer = '';
     let repoUrl = await getRepositoryUrl();
     // Only add a footer if we have the repository URL.
-    if(repoUrl) {
+    if (repoUrl) {
       footer = dedent`
         <footer>
           Source: <a href="${repoUrl}">${repoUrl}</a>

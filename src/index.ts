@@ -27,13 +27,13 @@ export default {
 
     if (!('default' in module)) {
       throw new Error(
-        `Route module for ${url.pathname} is missing default export`
+        `Route module for ${url.pathname} is missing default export`,
       );
     }
 
     if (typeof module.default !== 'function') {
       throw new Error(
-        `Route module for ${url.pathname} default export is not a function`
+        `Route module for ${url.pathname} default export is not a function`,
       );
     }
 
