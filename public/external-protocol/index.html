@@ -6,19 +6,194 @@
     <title>Links to different external protocols</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-      body > a {
-        display: block;
+      :root {
+        --grid-gap: 12px;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+          Cantarell, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .grid-container {
+        display: grid;
+        grid-template-columns: auto repeat(3, 1fr);
+        gap: var(--grid-gap);
+        margin-top: 30px;
+      }
+      .grid-header {
+        display: grid;
+        grid-template-columns: auto repeat(3, 1fr);
+        gap: var(--grid-gap);
+        margin-bottom: 10px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+      }
+      .header-cell {
+        font-weight: bold;
+        padding: 10px;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+      }
+      .protocol-name {
+        font-weight: bold;
+        padding: 10px;
+      }
+      .grid-cell {
+        padding: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .grid-row {
+        display: contents;
+      }
+      .grid-row:nth-child(odd) {
+        background-color: #f9f9f9;
+      }
+      button {
+        cursor: pointer;
+        padding: 8px 12px;
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+        width: 100%;
+        max-width: 200px;
+      }
+      button:hover {
+        background-color: #e0e0e0;
+      }
+      a {
+        display: inline-block;
+        padding: 8px 12px;
+        text-decoration: none;
+        color: #0066cc;
+        border: 1px solid #0066cc;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+        text-align: center;
+        width: 100%;
+        max-width: 200px;
+      }
+      a:hover {
+        background-color: #e6f0fa;
       }
     </style>
   </head>
   <body>
-    <a href="zoomus://foobar">Zoom Meeting</a>
-    <a href="mailto:example@example.com">Email</a>
-    <a href="tel:+1234567890">Phone Call</a>
-    <a href="sms:+1234567890">SMS</a>
-    <a href="geo:37.7749,-122.4194">Open Location</a>
-    <a href="spotify:track:foobar">Spotify Track</a>
-    <a href="slack://open">Open Slack</a>
-    <a href="openid4vp://example">OpenID4VP</a>
+    <h1>External Protocol Navigation Methods</h1>
+
+    <div class="grid-header">
+      <div class="header-cell">Protocol</div>
+      <div class="header-cell">Direct href link</div>
+      <div class="header-cell">window.location.href</div>
+      <div class="header-cell">Popup navigation</div>
+    </div>
+
+    <div class="grid-container" id="protocol-container"></div>
+
+    <script>
+      // Protocol data - define all protocols here
+      const protocols = [
+        { url: 'zoomus://foobar', name: 'Zoom Meeting' },
+        { url: 'mailto:example@example.com', name: 'Email' },
+        { url: 'tel:+1234567890', name: 'Phone Call' },
+        { url: 'sms:+1234567890', name: 'SMS' },
+        { url: 'geo:37.7749,-122.4194', name: 'Open Location' },
+        { url: 'spotify:track:foobar', name: 'Spotify Track' },
+        { url: 'slack://open', name: 'Open Slack' },
+        { url: 'openid4vp://example', name: 'OpenID4VP' },
+      ];
+
+      // Function to create the popup and navigate
+      function openInPopup(url) {
+        const popup = window.open(
+          'about:blank',
+          '_blank',
+          'width=500,height=300',
+        );
+        if (popup) {
+          popup.document.write(`
+            <html>
+              <head>
+                <title>Redirecting...</title>
+              </head>
+              <body>
+                <h3>Redirecting to: ${url}</h3>
+                <p>If you are not automatically redirected, click the button below:</p>
+                <button onclick="window.location.href='${url}'">Go to ${url}</button>
+                <script>
+                  // Redirect after a short delay
+                  setTimeout(function() {
+                    window.location.href = '${url}';
+                  }, 500);
+                <\/script>
+              </body>
+            </html>
+          `);
+        } else {
+          alert('Popup was blocked. Please allow popups for this site.');
+        }
+      }
+
+      // Build the protocol links
+      function buildProtocolLinks() {
+        const container = document.getElementById('protocol-container');
+
+        protocols.forEach((protocol) => {
+          // Create row for this protocol
+          const row = document.createElement('div');
+          row.className = 'grid-row';
+
+          // Add protocol name cell
+          const nameCell = document.createElement('div');
+          nameCell.className = 'protocol-name';
+          nameCell.textContent = protocol.name;
+          row.appendChild(nameCell);
+
+          // a) Direct href link cell
+          const linkCell = document.createElement('div');
+          linkCell.className = 'grid-cell';
+          const link = document.createElement('a');
+          link.href = protocol.url;
+          link.textContent = `Open ${protocol.name}`;
+          linkCell.appendChild(link);
+          row.appendChild(linkCell);
+
+          // b) JS window.location navigation button cell
+          const directButtonCell = document.createElement('div');
+          directButtonCell.className = 'grid-cell';
+          const directButton = document.createElement('button');
+          directButton.textContent = `Navigate to ${protocol.name}`;
+          directButton.onclick = () => {
+            window.location.href = protocol.url;
+          };
+          directButtonCell.appendChild(directButton);
+          row.appendChild(directButtonCell);
+
+          // c) Popup with JS navigation cell
+          const popupButtonCell = document.createElement('div');
+          popupButtonCell.className = 'grid-cell';
+          const popupButton = document.createElement('button');
+          popupButton.textContent = `Open ${protocol.name} in popup`;
+          popupButton.onclick = () => {
+            openInPopup(protocol.url);
+          };
+          popupButtonCell.appendChild(popupButton);
+          row.appendChild(popupButtonCell);
+
+          // Add the row to the container
+          container.appendChild(row);
+        });
+      }
+
+      buildProtocolLinks();
+
+      // Initialize on page load
+      //   document.addEventListener('DOMContentLoaded', buildProtocolLinks);
+    </script>
   </body>
 </html>
