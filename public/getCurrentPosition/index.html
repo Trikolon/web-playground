@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Requests access to location on click</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <h1>Requests geolocation access on click</h1>
+    <button>Request Location</button>
+    <script>
+      async function requestLocation() {
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+          });
+          console.info('Location obtained:', position);
+          alert(
+            `Latitude: ${position.coords.latitude}, Longitude: ${position.coords.longitude}`,
+          );
+        } catch (error) {
+          console.error('Error obtaining location:', error);
+          alert(
+            'Failed to obtain location. Please ensure location services are enabled and permission is granted.',
+          );
+        }
+      }
+      document
+        .querySelector('button')
+        .addEventListener('click', requestLocation);
+    </script>
+  </body>
+</html>
