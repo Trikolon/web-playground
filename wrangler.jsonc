@@ -11,7 +11,17 @@
     "directory": "./dist",
   },
   "workers_dev": false,
-  "routes": [{ "pattern": "playground.emz.run/*", "zone_name": "emz.run" }],
+  "routes": [
+    {
+      "pattern": "playground.emz.run/*",
+      "zone_name": "emz.run",
+    },
+    // Another route for testing non-ASCII characters.
+    {
+      "pattern": "pläygröünd.emz.run/*",
+      "zone_name": "emz.run",
+    },
+  ],
   "observability": {
     "enabled": true,
   },
