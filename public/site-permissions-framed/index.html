@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Site Permissions Framed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+      }
+      iframe {
+        width: 100%;
+        height: 800px;
+        border: 1px solid #ccc;
+        margin-bottom: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>
+      <a href="https://permission.site">permission.site</a> framed allow="*"
+    </h1>
+    <iframe
+      allow="
+        accelerometer;
+        ambient-light-sensor;
+        autoplay;
+        bluetooth;
+        camera;
+        clipboard-read;
+        clipboard-write;
+        compute-pressure;
+        display-capture;
+        encrypted-media;
+        fullscreen;
+        geolocation;
+        gyroscope;
+        hid;
+        identity-credentials-get;
+        idle-detection;
+        local-fonts;
+        magnetometer;
+        microphone;
+        midi;
+        payment;
+        picture-in-picture;
+        publickey-credentials-create;
+        publickey-credentials-get;
+        screen-wake-lock;
+        serial;
+        storage-access;
+        usb;
+        web-share;
+        window-management;
+        xr-spatial-tracking
+      "
+      src="https://permission.site/"
+    ></iframe>
+
+    <h1>
+      <a href="https://permission.site">permission.site</a> framed allow="none"
+    </h1>
+    <p>
+      Permissions that are covered under permissions policy should be blocked.
+    </p>
+    <iframe allow="none" src="https://permission.site/"></iframe>
+  </body>
+</html>
