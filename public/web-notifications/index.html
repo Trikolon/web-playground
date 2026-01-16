@@ -1,0 +1,256 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Web Notifications Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+        line-height: 1.6;
+      }
+      button {
+        padding: 12px 24px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+      button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+      #status {
+        padding: 12px;
+        margin: 10px 0;
+        border-radius: 4px;
+        background-color: #f0f0f0;
+      }
+      .error {
+        background-color: #ffebee;
+        color: #c62828;
+      }
+      .success {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+      .info {
+        background-color: #e3f2fd;
+        color: #1565c0;
+      }
+      code {
+        background-color: #f5f5f5;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Web Notifications Demo</h1>
+    <p>
+      This demo uses the Web Notification API with a service worker to send
+      periodic background notifications.
+    </p>
+
+    <div>
+      <button id="requestPermission">Request Notification Permission</button>
+      <button id="startNotifications" disabled>Start Periodic Notifications</button>
+      <button id="stopNotifications" disabled>Stop Notifications</button>
+    </div>
+
+    <div id="status"></div>
+
+    <h2>Configuration</h2>
+    <p>
+      The service worker is configured to send notifications every
+      <code>10 seconds</code>, up to <code>10 notifications</code> total.
+      These values can be adjusted in the service worker file.
+    </p>
+
+    <h2>How it works</h2>
+    <ol>
+      <li>Click "Request Notification Permission" to grant notification access</li>
+      <li>Once granted, click "Start Periodic Notifications"</li>
+      <li>The service worker will send notifications in the background</li>
+      <li>Notifications will continue even if you close this tab (but keep the browser open)</li>
+    </ol>
+
+    <script>
+      const statusDiv = document.getElementById('status');
+      const requestPermissionBtn = document.getElementById('requestPermission');
+      const startNotificationsBtn = document.getElementById('startNotifications');
+      const stopNotificationsBtn = document.getElementById('stopNotifications');
+
+      let serviceWorkerRegistration = null;
+
+      function updateStatus(message, type = 'info') {
+        statusDiv.textContent = message;
+        statusDiv.className = type;
+      }
+
+      function updateButtonStates() {
+        const permissionGranted = Notification.permission === 'granted';
+        requestPermissionBtn.disabled = permissionGranted;
+        startNotificationsBtn.disabled = !permissionGranted || !serviceWorkerRegistration;
+      }
+
+      async function requestNotificationPermission() {
+        try {
+          const permission = await Notification.requestPermission();
+
+          if (permission === 'granted') {
+            updateStatus('Notification permission granted!', 'success');
+            updateButtonStates();
+          } else if (permission === 'denied') {
+            updateStatus('Notification permission denied.', 'error');
+          } else {
+            updateStatus('Notification permission dismissed.', 'info');
+          }
+        } catch (err) {
+          updateStatus(`Error requesting permission: ${err.message}`, 'error');
+          console.error('Error requesting permission:', err);
+        }
+      }
+
+      async function registerServiceWorker() {
+        if (!('serviceWorker' in navigator)) {
+          updateStatus('Service Workers are not supported in this browser.', 'error');
+          return false;
+        }
+
+        try {
+          const registration = await navigator.serviceWorker.register('./sw.js');
+          serviceWorkerRegistration = registration;
+
+          await navigator.serviceWorker.ready;
+          updateStatus('Service Worker registered successfully.', 'success');
+          updateButtonStates();
+          return true;
+        } catch (err) {
+          updateStatus(`Service Worker registration failed: ${err.message}`, 'error');
+          console.error('Service Worker registration failed:', err);
+          return false;
+        }
+      }
+
+      async function checkServiceWorkerState() {
+        if (!serviceWorkerRegistration || !serviceWorkerRegistration.active) {
+          return;
+        }
+
+        try {
+          // Create a MessageChannel to receive the response
+          const messageChannel = new MessageChannel();
+
+          // Set up a promise to wait for the response
+          const statePromise = new Promise((resolve) => {
+            messageChannel.port1.onmessage = (event) => {
+              resolve(event.data);
+            };
+          });
+
+          // Request the current state
+          serviceWorkerRegistration.active.postMessage(
+            { type: 'GET_STATE' },
+            [messageChannel.port2]
+          );
+
+          // Wait for the response
+          const state = await statePromise;
+
+          if (state.isRunning) {
+            updateStatus(
+              `Notifications are currently running (${state.notificationCount}/10 sent). Click "Stop" to cancel.`,
+              'success'
+            );
+            startNotificationsBtn.disabled = true;
+            stopNotificationsBtn.disabled = false;
+          }
+        } catch (err) {
+          console.error('Error checking service worker state:', err);
+        }
+      }
+
+      async function startNotifications() {
+        if (!serviceWorkerRegistration) {
+          updateStatus('Service Worker not registered.', 'error');
+          return;
+        }
+
+        try {
+          serviceWorkerRegistration.active.postMessage({
+            type: 'START_NOTIFICATIONS'
+          });
+
+          updateStatus('Periodic notifications started! You should receive notifications every 10 seconds.', 'success');
+          startNotificationsBtn.disabled = true;
+          stopNotificationsBtn.disabled = false;
+        } catch (err) {
+          updateStatus(`Error starting notifications: ${err.message}`, 'error');
+          console.error('Error starting notifications:', err);
+        }
+      }
+
+      function stopNotifications() {
+        if (!serviceWorkerRegistration) {
+          updateStatus('Service Worker not registered.', 'error');
+          return;
+        }
+
+        try {
+          serviceWorkerRegistration.active.postMessage({
+            type: 'STOP_NOTIFICATIONS'
+          });
+
+          updateStatus('Periodic notifications stopped.', 'info');
+          startNotificationsBtn.disabled = false;
+          stopNotificationsBtn.disabled = true;
+        } catch (err) {
+          updateStatus(`Error stopping notifications: ${err.message}`, 'error');
+          console.error('Error stopping notifications:', err);
+        }
+      }
+
+      // Event listeners
+      requestPermissionBtn.addEventListener('click', requestNotificationPermission);
+      startNotificationsBtn.addEventListener('click', startNotifications);
+      stopNotificationsBtn.addEventListener('click', stopNotifications);
+
+      // Listen for messages from the service worker
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data.type === 'NOTIFICATIONS_COMPLETE') {
+          updateStatus('All notifications have been sent (10/10).', 'success');
+          startNotificationsBtn.disabled = false;
+          stopNotificationsBtn.disabled = true;
+        }
+      });
+
+      // Initialize
+      (async () => {
+        updateStatus('Initializing...', 'info');
+        await registerServiceWorker();
+        updateButtonStates();
+
+        // Check if notifications are already running
+        await checkServiceWorkerState();
+
+        // Only update status if it wasn't already updated by checkServiceWorkerState
+        if (statusDiv.textContent === 'Initializing...' || statusDiv.textContent === 'Service Worker registered successfully.') {
+          if (Notification.permission === 'granted') {
+            updateStatus('Notification permission already granted. Click "Start Periodic Notifications" to begin.', 'success');
+          } else {
+            updateStatus('Click "Request Notification Permission" to get started.', 'info');
+          }
+        }
+      })();
+    </script>
+  </body>
+</html>
