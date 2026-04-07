@@ -558,6 +558,33 @@
           });
       }
 
+      async function queryPermission(name) {
+        try {
+          const status = await navigator.permissions.query({ name });
+          const type =
+            status.state === 'granted'
+              ? 'success'
+              : status.state === 'denied'
+                ? 'error'
+                : 'warn';
+          log(`permissions.query({ name: "${name}" }) → ${status.state}`, type);
+          status.addEventListener('change', () => {
+            const t =
+              status.state === 'granted'
+                ? 'success'
+                : status.state === 'denied'
+                  ? 'error'
+                  : 'warn';
+            log(`Permission "${name}" changed → ${status.state}`, t);
+          });
+        } catch (err) {
+          log(
+            `permissions.query({ name: "${name}" }) → ${err.message}`,
+            'error',
+          );
+        }
+      }
+
       log('Local Network Access test page ready.', 'info');
       log(`Page origin: ${location.origin}`, 'info');
       if (!window.isSecureContext) {
@@ -568,6 +595,8 @@
       } else {
         log('Page is in a secure context.', 'success');
       }
+      queryPermission('local-network');
+      queryPermission('loopback-network');
     </script>
   </body>
 </html>
