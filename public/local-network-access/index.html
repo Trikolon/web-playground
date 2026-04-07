@@ -1,0 +1,573 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Local Network Access</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+        line-height: 1.6;
+      }
+      button {
+        padding: 12px 24px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        margin: 5px 5px 5px 0;
+      }
+      input[type='text'] {
+        padding: 10px 14px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 300px;
+        font-family: 'Courier New', monospace;
+      }
+      .test-section {
+        margin: 20px 0;
+        padding: 16px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+      }
+      .test-section h3 {
+        margin-top: 0;
+      }
+      #log {
+        background-color: #1e1e1e;
+        color: #d4d4d4;
+        padding: 16px;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        max-height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .log-error {
+        color: #f44336;
+      }
+      .log-success {
+        color: #4caf50;
+      }
+      .log-info {
+        color: #64b5f6;
+      }
+      .log-warn {
+        color: #ffb74d;
+      }
+      code {
+        background-color: #f5f5f5;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: bold;
+        color: white;
+      }
+      .badge-local {
+        background-color: #ff9800;
+      }
+      .badge-loopback {
+        background-color: #f44336;
+      }
+      .badge-public {
+        background-color: #4caf50;
+      }
+      .preset-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+      .preset-buttons button {
+        padding: 6px 12px;
+        font-size: 13px;
+        background-color: #6c757d;
+      }
+      details {
+        margin: 10px 0;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .snippet-container {
+        position: relative;
+      }
+      .snippet-container pre {
+        background-color: #1e1e1e;
+        color: #d4d4d4;
+        padding: 16px;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        overflow-x: auto;
+        white-space: pre;
+        margin: 8px 0;
+      }
+      .copy-btn {
+        position: absolute;
+        top: 16px;
+        right: 8px;
+        padding: 4px 10px;
+        font-size: 12px;
+        background-color: #444;
+        color: #d4d4d4;
+        border: 1px solid #666;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 0;
+      }
+      .copy-btn:hover {
+        background-color: #555;
+      }
+      .tab-bar {
+        display: flex;
+        border-bottom: 2px solid #e0e0e0;
+      }
+      .tab-bar button {
+        padding: 8px 16px;
+        font-size: 14px;
+        background: none;
+        color: #555;
+        border: none;
+        border-bottom: 2px solid transparent;
+        margin: 0 0 -2px 0;
+        border-radius: 0;
+        cursor: pointer;
+      }
+      .tab-bar button.active {
+        color: #007bff;
+        border-bottom-color: #007bff;
+        font-weight: bold;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      .callout {
+        padding: 12px 16px;
+        border-radius: 6px;
+        border-left: 4px solid;
+        margin: 12px 0;
+      }
+      .callout-warning {
+        background-color: #fff8e1;
+        border-color: #ff9800;
+        color: #6d4c00;
+      }
+      .callout-info {
+        background-color: #e3f2fd;
+        border-color: #2196f3;
+        color: #0d47a1;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Local Network Access</h1>
+    <p>
+      <a href="https://wicg.github.io/local-network-access/"
+        >Local Network Access</a
+      >
+      (LNA) restricts websites from making requests to local/private network
+      resources without user permission. In Firefox, this is gated behind a
+      permission prompt.
+    </p>
+
+    <h2>IP Address Spaces</h2>
+    <p>The spec defines three address spaces, from most to least public:</p>
+    <ul>
+      <li>
+        <span class="badge badge-public">public</span> Globally routable
+        addresses (e.g. <code>93.184.216.34</code>)
+      </li>
+      <li>
+        <span class="badge badge-local">local</span> Private/link-local
+        addresses (e.g. <code>192.168.x.x</code>, <code>10.x.x.x</code>,
+        <code>172.16-31.x.x</code>)
+      </li>
+      <li>
+        <span class="badge badge-loopback">loopback</span> Loopback addresses
+        (<code>127.0.0.1</code>, <code>::1</code>)
+      </li>
+    </ul>
+    <p>
+      A request from a <em>more-public</em> context to a <em>less-public</em>
+      address is considered a local network request and requires permission.
+    </p>
+
+    <h2>Setup: Start a Local Server</h2>
+    <div class="callout callout-warning">
+      The tests below need something listening on your machine. Without a
+      running server, the browser can't distinguish "blocked by LNA" from
+      "connection refused" &mdash; and won't show the permission prompt.
+    </div>
+    <p>
+      Pick one of the options below and run it in a terminal. Each starts an
+      HTTP server on <code>localhost:8080</code> that serves a simple page with
+      permissive CORS headers, so every test button works out of the box.
+    </p>
+
+    <div class="tab-bar">
+      <button class="active" onclick="switchTab('python')">Python</button>
+      <button onclick="switchTab('node')">Node.js</button>
+      <button onclick="switchTab('npx')">npx (zero-install)</button>
+      <button onclick="switchTab('pnpm')">pnpm dlx</button>
+    </div>
+
+    <div id="tab-python" class="tab-content active">
+      <div class="snippet-container">
+        <button class="copy-btn" onclick="copySnippet('python')">Copy</button>
+        <pre id="snippet-python"></pre>
+      </div>
+    </div>
+
+    <div id="tab-node" class="tab-content">
+      <div class="snippet-container">
+        <button class="copy-btn" onclick="copySnippet('node')">Copy</button>
+        <pre id="snippet-node"></pre>
+      </div>
+    </div>
+
+    <div id="tab-npx" class="tab-content">
+      <div class="snippet-container">
+        <button class="copy-btn" onclick="copySnippet('npx')">Copy</button>
+        <pre id="snippet-npx"></pre>
+      </div>
+      <div class="callout callout-info">
+        This serves the current directory. Some test buttons (image, script,
+        stylesheet) will only work if matching files exist. The Python and Node
+        options return a response for any path.
+      </div>
+    </div>
+
+    <div id="tab-pnpm" class="tab-content">
+      <div class="snippet-container">
+        <button class="copy-btn" onclick="copySnippet('pnpm')">Copy</button>
+        <pre id="snippet-pnpm"></pre>
+      </div>
+      <div class="callout callout-info">
+        This serves the current directory. Some test buttons (image, script,
+        stylesheet) will only work if matching files exist. The Python and Node
+        options return a response for any path.
+      </div>
+    </div>
+
+    <p>
+      Once you see "Listening on http://localhost:8080", you're ready to run the
+      tests below.
+    </p>
+
+    <h2>Tests</h2>
+    <div class="callout callout-info">
+      <strong>Mixed content note:</strong> This page is served over HTTPS, but
+      the local server runs plain HTTP. Browsers treat
+      <strong>loopback addresses</strong> (<code>localhost</code>,
+      <code>127.0.0.1</code>, <code>::1</code>) as trustworthy, so
+      <code>http://</code> requests to them are <em>not</em> blocked as mixed
+      content. However, requests to
+      <strong>private network addresses</strong> (<code>192.168.x.x</code>,
+      <code>10.x.x.x</code>, etc.) over <code>http://</code> <em>will</em> be
+      blocked. Use the loopback presets for testing.
+    </div>
+
+    <div class="test-section">
+      <h3>fetch() Test</h3>
+      <p>
+        Try fetching a local/private network resource. The browser should show a
+        permission prompt.
+      </p>
+
+      <div class="preset-buttons">
+        <span>Presets:</span>
+        <button onclick="setUrl('http://localhost:8080/')">
+          localhost:8080
+        </button>
+        <button onclick="setUrl('http://127.0.0.1:8080/')">
+          127.0.0.1:8080
+        </button>
+        <button onclick="setUrl('http://[::1]:8080/')">[::1]:8080</button>
+        <button onclick="setUrl('http://192.168.1.1/')">192.168.1.1</button>
+        <button onclick="setUrl('http://10.0.0.1/')">10.0.0.1</button>
+        <button onclick="setUrl('http://router.local/')">router.local</button>
+      </div>
+
+      <div
+        style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap"
+      >
+        <input
+          type="text"
+          id="fetchUrl"
+          value="http://localhost:8080/"
+          placeholder="http://localhost:8080/"
+        />
+        <button onclick="doFetch()">Fetch</button>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h3>Subresource Tests</h3>
+      <p>Load various subresource types from local network addresses.</p>
+
+      <div
+        style="
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          flex-wrap: wrap;
+          margin-bottom: 10px;
+        "
+      >
+        <input
+          type="text"
+          id="subresourceBase"
+          value="http://localhost:8080"
+          placeholder="http://localhost:8080"
+        />
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 5px">
+        <button onclick="doImage()">Load Image</button>
+        <button onclick="doScript()">Load Script</button>
+        <button onclick="doStylesheet()">Load Stylesheet</button>
+        <button onclick="doIframe()">Load iframe</button>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h3>iframe Embed</h3>
+      <p>Embed a local network page in an iframe.</p>
+      <div
+        style="
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          flex-wrap: wrap;
+          margin-bottom: 10px;
+        "
+      >
+        <input
+          type="text"
+          id="iframeUrl"
+          value="http://localhost:8080/"
+          placeholder="http://localhost:8080/"
+        />
+        <button onclick="doIframeEmbed()">Embed</button>
+        <button onclick="clearIframe()">Clear</button>
+      </div>
+      <div
+        id="iframeContainer"
+        style="border: 2px dashed #ccc; min-height: 100px; border-radius: 4px"
+      ></div>
+    </div>
+
+    <details>
+      <summary>About <code>Permissions-Policy</code></summary>
+      <p>Two policy-controlled features gate LNA:</p>
+      <ul>
+        <li>
+          <code>local-network</code> &mdash; controls requests to local
+          (private) addresses
+        </li>
+        <li>
+          <code>loopback-network</code> &mdash; controls requests to loopback
+          addresses
+        </li>
+      </ul>
+      <p>
+        Default allowlist is <code>'self'</code>. Cross-origin iframes need
+        explicit delegation:
+      </p>
+      <pre><code>&lt;iframe src="..." allow="local-network"&gt;&lt;/iframe&gt;</code></pre>
+    </details>
+
+    <h2>Log</h2>
+    <div>
+      <button
+        onclick="clearLog()"
+        style="background-color: #6c757d; padding: 6px 12px; font-size: 13px"
+      >
+        Clear Log
+      </button>
+    </div>
+    <div id="log"></div>
+
+    <script>
+      function switchTab(name) {
+        document
+          .querySelectorAll('.tab-bar button')
+          .forEach((b) => b.classList.remove('active'));
+        document
+          .querySelectorAll('.tab-content')
+          .forEach((t) => t.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        document.querySelectorAll('.tab-bar button').forEach((b) => {
+          if (b.getAttribute('onclick')?.includes(name))
+            b.classList.add('active');
+        });
+      }
+
+      function copySnippet(name) {
+        const text = document.getElementById('snippet-' + name).textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = document.querySelector('#tab-' + name + ' .copy-btn');
+          btn.textContent = 'Copied!';
+          setTimeout(() => (btn.textContent = 'Copy'), 1500);
+        });
+      }
+
+      const logEl = document.getElementById('log');
+
+      function log(msg, type = 'info') {
+        const line = document.createElement('span');
+        line.className = 'log-' + type;
+        const ts = new Date().toLocaleTimeString();
+        line.textContent = `[${ts}] ${msg}`;
+        logEl.appendChild(line);
+        logEl.appendChild(document.createTextNode('\n'));
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function clearLog() {
+        logEl.textContent = '';
+      }
+
+      function setUrl(url) {
+        document.getElementById('fetchUrl').value = url;
+      }
+
+      async function doFetch() {
+        const url = document.getElementById('fetchUrl').value;
+        log(`fetch("${url}", { mode: "no-cors", cache: "no-store" })`, 'info');
+        try {
+          const resp = await fetch(url, { mode: 'no-cors', cache: 'no-store' });
+          log(
+            `Response: ${resp.status} ${resp.statusText} (type: ${resp.type})`,
+            'success',
+          );
+          if (resp.type === 'opaque') {
+            log(
+              'Opaque response (no-cors) — body is not readable, but request succeeded.',
+              'warn',
+            );
+          }
+        } catch (err) {
+          log(`Error: ${err.message}`, 'error');
+        }
+      }
+
+      function getSubresourceBase() {
+        return document
+          .getElementById('subresourceBase')
+          .value.replace(/\/$/, '');
+      }
+
+      function doImage() {
+        const url = getSubresourceBase() + '/image.png';
+        log(`Loading <img src="${url}">`, 'info');
+        const img = new Image();
+        img.onload = () =>
+          log(
+            `Image loaded (${img.naturalWidth}x${img.naturalHeight}).`,
+            'success',
+          );
+        img.onerror = () => log('Image failed to load.', 'error');
+        img.src = url;
+      }
+
+      function doScript() {
+        const url = getSubresourceBase() + '/script.js';
+        log(`Loading <script src="${url}">`, 'info');
+        const script = document.createElement('script');
+        script.onload = () => log('Script loaded.', 'success');
+        script.onerror = () => log('Script failed to load.', 'error');
+        script.src = url;
+        document.head.appendChild(script);
+      }
+
+      function doStylesheet() {
+        const url = getSubresourceBase() + '/style.css';
+        log(`Loading <link href="${url}">`, 'info');
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.onload = () => log('Stylesheet loaded.', 'success');
+        link.onerror = () => log('Stylesheet failed to load.', 'error');
+        link.href = url;
+        document.head.appendChild(link);
+      }
+
+      function doIframe() {
+        const url = getSubresourceBase() + '/';
+        log(`Loading <iframe src="${url}">`, 'info');
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.onload = () => log('iframe loaded.', 'success');
+        iframe.onerror = () => log('iframe failed to load.', 'error');
+        iframe.src = url;
+        document.body.appendChild(iframe);
+        setTimeout(() => iframe.remove(), 5000);
+      }
+
+      function doIframeEmbed() {
+        const url = document.getElementById('iframeUrl').value;
+        const container = document.getElementById('iframeContainer');
+        container.innerHTML = '';
+        log(`Embedding <iframe src="${url}">`, 'info');
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.style.width = '100%';
+        iframe.style.height = '300px';
+        iframe.style.border = 'none';
+        iframe.allow = 'local-network; loopback-network';
+        iframe.onload = () => log('Embedded iframe loaded.', 'success');
+        iframe.onerror = () => log('Embedded iframe failed to load.', 'error');
+        container.appendChild(iframe);
+      }
+
+      function clearIframe() {
+        document.getElementById('iframeContainer').innerHTML = '';
+        log('iframe cleared.', 'info');
+      }
+
+      // Load code snippets from external files
+      for (const name of ['python', 'node', 'npx', 'pnpm']) {
+        fetch(`./snippets/${name}.sh`)
+          .then((r) => r.text())
+          .then((text) => {
+            document.getElementById('snippet-' + name).textContent =
+              text.trim();
+          });
+      }
+
+      log('Local Network Access test page ready.', 'info');
+      log(`Page origin: ${location.origin}`, 'info');
+      if (!window.isSecureContext) {
+        log(
+          'Warning: This page is NOT in a secure context. LNA requires a secure context.',
+          'warn',
+        );
+      } else {
+        log('Page is in a secure context.', 'success');
+      }
+    </script>
+  </body>
+</html>
