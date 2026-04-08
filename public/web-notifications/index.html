@@ -7,7 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       body {
-        font-family: system-ui, -apple-system, sans-serif;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
         max-width: 800px;
         margin: 40px auto;
         padding: 0 20px;
@@ -62,7 +65,9 @@
 
     <div>
       <button id="requestPermission">Request Notification Permission</button>
-      <button id="startNotifications" disabled>Start Periodic Notifications</button>
+      <button id="startNotifications" disabled>
+        Start Periodic Notifications
+      </button>
       <button id="stopNotifications" disabled>Stop Notifications</button>
     </div>
 
@@ -71,22 +76,28 @@
     <h2>Configuration</h2>
     <p>
       The service worker is configured to send notifications every
-      <code>10 seconds</code>, up to <code>10 notifications</code> total.
-      These values can be adjusted in the service worker file.
+      <code>10 seconds</code>, up to <code>10 notifications</code> total. These
+      values can be adjusted in the service worker file.
     </p>
 
     <h2>How it works</h2>
     <ol>
-      <li>Click "Request Notification Permission" to grant notification access</li>
+      <li>
+        Click "Request Notification Permission" to grant notification access
+      </li>
       <li>Once granted, click "Start Periodic Notifications"</li>
       <li>The service worker will send notifications in the background</li>
-      <li>Notifications will continue even if you close this tab (but keep the browser open)</li>
+      <li>
+        Notifications will continue even if you close this tab (but keep the
+        browser open)
+      </li>
     </ol>
 
     <script>
       const statusDiv = document.getElementById('status');
       const requestPermissionBtn = document.getElementById('requestPermission');
-      const startNotificationsBtn = document.getElementById('startNotifications');
+      const startNotificationsBtn =
+        document.getElementById('startNotifications');
       const stopNotificationsBtn = document.getElementById('stopNotifications');
 
       let serviceWorkerRegistration = null;
@@ -99,7 +110,8 @@
       function updateButtonStates() {
         const permissionGranted = Notification.permission === 'granted';
         requestPermissionBtn.disabled = permissionGranted;
-        startNotificationsBtn.disabled = !permissionGranted || !serviceWorkerRegistration;
+        startNotificationsBtn.disabled =
+          !permissionGranted || !serviceWorkerRegistration;
       }
 
       async function requestNotificationPermission() {
@@ -122,12 +134,16 @@
 
       async function registerServiceWorker() {
         if (!('serviceWorker' in navigator)) {
-          updateStatus('Service Workers are not supported in this browser.', 'error');
+          updateStatus(
+            'Service Workers are not supported in this browser.',
+            'error',
+          );
           return false;
         }
 
         try {
-          const registration = await navigator.serviceWorker.register('./sw.js');
+          const registration =
+            await navigator.serviceWorker.register('./sw.js');
           serviceWorkerRegistration = registration;
 
           await navigator.serviceWorker.ready;
@@ -135,7 +151,10 @@
           updateButtonStates();
           return true;
         } catch (err) {
-          updateStatus(`Service Worker registration failed: ${err.message}`, 'error');
+          updateStatus(
+            `Service Worker registration failed: ${err.message}`,
+            'error',
+          );
           console.error('Service Worker registration failed:', err);
           return false;
         }
@@ -158,10 +177,9 @@
           });
 
           // Request the current state
-          serviceWorkerRegistration.active.postMessage(
-            { type: 'GET_STATE' },
-            [messageChannel.port2]
-          );
+          serviceWorkerRegistration.active.postMessage({ type: 'GET_STATE' }, [
+            messageChannel.port2,
+          ]);
 
           // Wait for the response
           const state = await statePromise;
@@ -169,7 +187,7 @@
           if (state.isRunning) {
             updateStatus(
               `Notifications are currently running (${state.notificationCount}/10 sent). Click "Stop" to cancel.`,
-              'success'
+              'success',
             );
             startNotificationsBtn.disabled = true;
             stopNotificationsBtn.disabled = false;
@@ -187,10 +205,13 @@
 
         try {
           serviceWorkerRegistration.active.postMessage({
-            type: 'START_NOTIFICATIONS'
+            type: 'START_NOTIFICATIONS',
           });
 
-          updateStatus('Periodic notifications started! You should receive notifications every 10 seconds.', 'success');
+          updateStatus(
+            'Periodic notifications started! You should receive notifications every 10 seconds.',
+            'success',
+          );
           startNotificationsBtn.disabled = true;
           stopNotificationsBtn.disabled = false;
         } catch (err) {
@@ -207,7 +228,7 @@
 
         try {
           serviceWorkerRegistration.active.postMessage({
-            type: 'STOP_NOTIFICATIONS'
+            type: 'STOP_NOTIFICATIONS',
           });
 
           updateStatus('Periodic notifications stopped.', 'info');
@@ -220,7 +241,10 @@
       }
 
       // Event listeners
-      requestPermissionBtn.addEventListener('click', requestNotificationPermission);
+      requestPermissionBtn.addEventListener(
+        'click',
+        requestNotificationPermission,
+      );
       startNotificationsBtn.addEventListener('click', startNotifications);
       stopNotificationsBtn.addEventListener('click', stopNotifications);
 
@@ -243,11 +267,20 @@
         await checkServiceWorkerState();
 
         // Only update status if it wasn't already updated by checkServiceWorkerState
-        if (statusDiv.textContent === 'Initializing...' || statusDiv.textContent === 'Service Worker registered successfully.') {
+        if (
+          statusDiv.textContent === 'Initializing...' ||
+          statusDiv.textContent === 'Service Worker registered successfully.'
+        ) {
           if (Notification.permission === 'granted') {
-            updateStatus('Notification permission already granted. Click "Start Periodic Notifications" to begin.', 'success');
+            updateStatus(
+              'Notification permission already granted. Click "Start Periodic Notifications" to begin.',
+              'success',
+            );
           } else {
-            updateStatus('Click "Request Notification Permission" to get started.', 'info');
+            updateStatus(
+              'Click "Request Notification Permission" to get started.',
+              'info',
+            );
           }
         }
       })();

@@ -7,7 +7,7 @@ const NOTIFICATION_OPTIONS = {
   badge: '/favicon.ico',
   vibrate: [200, 100, 200],
   tag: 'periodic-notification',
-  requireInteraction: false
+  requireInteraction: false,
 };
 
 // State
@@ -36,7 +36,7 @@ self.addEventListener('message', (event) => {
     event.ports[0].postMessage({
       type: 'STATE_RESPONSE',
       isRunning: notificationIntervalId !== null,
-      notificationCount: notificationCount
+      notificationCount: notificationCount,
     });
   }
 });
@@ -80,40 +80,46 @@ function sendNotification() {
   const body = `This is notification ${notificationCount} of ${MAX_NOTIFICATIONS}`;
   const timestamp = new Date().toLocaleTimeString();
 
-  console.log(`[Service Worker] Sending notification ${notificationCount}/${MAX_NOTIFICATIONS}`);
+  console.log(
+    `[Service Worker] Sending notification ${notificationCount}/${MAX_NOTIFICATIONS}`,
+  );
 
   self.registration.showNotification(NOTIFICATION_TITLE, {
     ...NOTIFICATION_OPTIONS,
     body: `${body}\nSent at: ${timestamp}`,
     data: {
       count: notificationCount,
-      timestamp: Date.now()
-    }
+      timestamp: Date.now(),
+    },
   });
 }
 
 async function notifyClientsComplete() {
   const clients = await self.clients.matchAll({
     includeUncontrolled: true,
-    type: 'window'
+    type: 'window',
   });
 
   clients.forEach((client) => {
     client.postMessage({
-      type: 'NOTIFICATIONS_COMPLETE'
+      type: 'NOTIFICATIONS_COMPLETE',
     });
   });
 }
 
 // Handle notification click events
 self.addEventListener('notificationclick', (event) => {
-  console.log('[Service Worker] Notification clicked:', event.notification.data);
+  console.log(
+    '[Service Worker] Notification clicked:',
+    event.notification.data,
+  );
 
   event.notification.close();
 
   // Focus or open the app window
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
         // If a window is already open, focus it
         for (const client of clientList) {
@@ -125,7 +131,7 @@ self.addEventListener('notificationclick', (event) => {
         if (self.clients.openWindow) {
           return self.clients.openWindow('/web-notifications/');
         }
-      })
+      }),
   );
 });
 

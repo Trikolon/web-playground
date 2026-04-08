@@ -50,7 +50,7 @@ The worker handles requests with this precedence:
 
 4. **404**: If none of the above match, return 404.
 
-### Route Modules (src/routes/**/index.ts)
+### Route Modules (src/routes/\*\*/index.ts)
 
 Route modules must export a default function matching Cloudflare's `ExportedHandler['fetch']` signature:
 
@@ -76,8 +76,8 @@ The custom Vite plugin `lib/publicIndexPlugin.ts` automatically generates `publi
 
 ### Static Assets & Configuration
 
-- **public/_headers**: Cloudflare Pages headers configuration (e.g., CORS, Clear-Site-Data)
-- **public/_redirects**: Cloudflare Pages redirects (supported but not currently used)
+- **public/\_headers**: Cloudflare Pages headers configuration (e.g., CORS, Clear-Site-Data)
+- **public/\_redirects**: Cloudflare Pages redirects (supported but not currently used)
 - **certs/**: Local SSL certificates for HTTPS development (generate with `npm run gen-certs`)
 
 ### HTTPS Development
@@ -94,11 +94,13 @@ The vite.config.js is configured to serve with HTTPS when running `npm run dev` 
 ## Adding New Content
 
 ### Static HTML page
+
 1. Create `public/your-page/index.html`
 2. Include `<title>Your Page Title</title>` for index generation
 3. Will be automatically available at `/your-page/`
 
 ### Dynamic route
+
 1. Create `src/routes/your-route/index.ts`
 2. Add `// title: Your Route Title` as first line
 3. Export default function with signature: `ExportedHandler<Env>['fetch']`
