@@ -14,7 +14,8 @@
     "deploy": "pnpm run build && wrangler deploy",
     "cf-typegen": "wrangler types",
     "gen-certs": "mkdir -p certs && mkcert -cert-file certs/cert.pem -key-file certs/key.pem example.com \"*.example.com\" example.org \"*.example.org\" example.net \"*.example.net\" localhost 127.0.0.1 ::1",
-    "prettier": "prettier --write ."
+    "lint": "tsc && eslint src/ && prettier --check .",
+    "lint:fix": "eslint src/ --fix && prettier --write ."
   },
   "packageManager": "pnpm@10.33.0",
   "pnpm": {
@@ -26,10 +27,13 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.31.0",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^25.5.0",
     "dedent": "^1.7.2",
+    "eslint": "^10.2.0",
     "glob": "^13.0.6",
     "prettier": "^3.8.1",
+    "typescript-eslint": "^8.58.1",
     "vite": "^8.0.3",
     "wrangler": "^4.80.0"
   }
