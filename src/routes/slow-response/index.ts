@@ -1,5 +1,5 @@
 // title: Returns a response after a configurable delay (?delay=ms, default 5000, max 25000)
-const route: ExportedHandler<Env>['fetch'] = async (request, env, ctx) => {
+const route: ExportedHandler<Env>['fetch'] = async (request, _env, _ctx) => {
   const url = new URL(request.url);
   const MIN_DELAY_MS = 0;
   const MAX_DELAY_MS = 25_000;

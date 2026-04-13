@@ -1,6 +1,6 @@
 // title: Returns the client's request headers as JSON
 
-const route: ExportedHandler<Env>['fetch'] = async (request, env, ctx) => {
+const route: ExportedHandler<Env>['fetch'] = async (request, _env, _ctx) => {
   // Get all request headers as an object
   const headersObj: Record<string, string> = {};
   for (const [key, value] of request.headers.entries()) {
