@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Repeated permission requests without waiting</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 700px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      #log {
+        margin-top: 1rem;
+        padding: 0.5rem;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        font-family: monospace;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      button {
+        margin: 0.25rem;
+        padding: 0.5rem 1rem;
+      }
+      label {
+        display: block;
+        margin: 0.25rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Repeated permission requests without waiting</h1>
+    <p>
+      Fires multiple permission requests for the same API at once, without
+      awaiting the result of any previous request.
+    </p>
+
+    <fieldset>
+      <legend>Permission type</legend>
+      <label>
+        <input type="radio" name="type" value="geolocation" checked />
+        Geolocation
+      </label>
+      <label>
+        <input type="radio" name="type" value="camera" /> Camera (getUserMedia)
+      </label>
+      <label>
+        <input type="radio" name="type" value="notifications" /> Notifications
+      </label>
+    </fieldset>
+
+    <p>
+      <label>
+        Number of concurrent requests:
+        <input type="number" id="count" value="5" min="1" max="50" />
+      </label>
+    </p>
+
+    <button id="start">Fire requests</button>
+    <button id="clear">Clear log</button>
+
+    <div id="log"></div>
+
+    <script>
+      const logEl = document.getElementById('log');
+      function log(msg) {
+        const ts = new Date().toISOString().slice(11, 23);
+        logEl.textContent += `[${ts}] ${msg}\n`;
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function requestGeolocation(i) {
+        log(`#${i} geolocation: requesting`);
+        navigator.geolocation.getCurrentPosition(
+          (pos) =>
+            log(
+              `#${i} geolocation: granted (${pos.coords.latitude}, ${pos.coords.longitude})`,
+            ),
+          (err) => log(`#${i} geolocation: error — ${err.message}`),
+        );
+      }
+
+      function requestCamera(i) {
+        log(`#${i} camera: requesting`);
+        navigator.mediaDevices.getUserMedia({ video: true }).then(
+          (stream) => {
+            log(`#${i} camera: granted`);
+            stream.getTracks().forEach((t) => t.stop());
+          },
+          (err) => log(`#${i} camera: error — ${err.message}`),
+        );
+      }
+
+      function requestNotifications(i) {
+        log(`#${i} notifications: requesting`);
+        Notification.requestPermission().then(
+          (result) => log(`#${i} notifications: ${result}`),
+          (err) => log(`#${i} notifications: error — ${err.message}`),
+        );
+      }
+
+      const requesters = {
+        geolocation: requestGeolocation,
+        camera: requestCamera,
+        notifications: requestNotifications,
+      };
+
+      document.getElementById('start').addEventListener('click', () => {
+        const type = document.querySelector('input[name="type"]:checked').value;
+        const count = parseInt(document.getElementById('count').value, 10);
+        log(`--- Firing ${count} ${type} requests ---`);
+        const requester = requesters[type];
+        for (let i = 1; i <= count; i++) {
+          requester(i);
+        }
+      });
+
+      document.getElementById('clear').addEventListener('click', () => {
+        logEl.textContent = '';
+      });
+    </script>
+  </body>
+</html>
