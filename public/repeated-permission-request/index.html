@@ -52,7 +52,28 @@
       <label>
         <input type="radio" name="type" value="notifications" /> Notifications
       </label>
+      <label>
+        <input type="radio" name="type" value="local-network" /> Local Network
+        Access (fetch)
+      </label>
     </fieldset>
+
+    <div id="local-network-options" style="display: none">
+      <label>
+        Target URL:
+        <input
+          type="text"
+          id="local-network-url"
+          value="http://localhost:8080/"
+          style="width: 250px; font-family: monospace"
+        />
+      </label>
+      <p style="font-size: 0.85rem; color: #666; margin: 0.25rem 0">
+        Needs a local server running. See
+        <a href="/local-network-access/">Local Network Access</a> for setup
+        instructions.
+      </p>
+    </div>
 
     <p>
       <label>
@@ -104,10 +125,23 @@
         );
       }
 
+      function requestLocalNetwork(i) {
+        const url = document.getElementById('local-network-url').value;
+        log(`#${i} local-network: fetching ${url}`);
+        fetch(url, { mode: 'no-cors', cache: 'no-store' }).then(
+          (resp) =>
+            log(
+              `#${i} local-network: ${resp.status} ${resp.statusText} (type: ${resp.type})`,
+            ),
+          (err) => log(`#${i} local-network: error — ${err.message}`),
+        );
+      }
+
       const requesters = {
         geolocation: requestGeolocation,
         camera: requestCamera,
         notifications: requestNotifications,
+        'local-network': requestLocalNetwork,
       };
 
       document.getElementById('start').addEventListener('click', () => {
@@ -122,6 +156,13 @@
 
       document.getElementById('clear').addEventListener('click', () => {
         logEl.textContent = '';
+      });
+
+      document.querySelectorAll('input[name="type"]').forEach((radio) => {
+        radio.addEventListener('change', () => {
+          document.getElementById('local-network-options').style.display =
+            radio.value === 'local-network' && radio.checked ? '' : 'none';
+        });
       });
     </script>
   </body>
