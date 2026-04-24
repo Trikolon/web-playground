@@ -3,3 +3,6 @@
 
 /clear-site-data/
   Clear-Site-Data: "*"
+
+/csp-sandbox/
+  Content-Security-Policy: sandbox
