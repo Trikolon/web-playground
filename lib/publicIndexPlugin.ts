@@ -4,8 +4,8 @@ import { glob } from 'glob';
 import dedent from 'dedent';
 
 function extractHTMLTitle(html: string): string {
-  const match = html.match(/<title>(.*?)<\/title>/);
-  return match?.[1].trim() || '';
+  const match = html.match(/<title>(.*?)<\/title>/s);
+  return match?.[1].replace(/\s+/g, ' ').trim() || '';
 }
 
 function extractScriptTitle(script: string): string {
