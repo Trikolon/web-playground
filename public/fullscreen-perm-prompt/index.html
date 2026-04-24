@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>
+      Triggers a permission prompt while the document is in fullscreen mode
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 700px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      button {
+        padding: 0.5rem 1rem;
+        margin-right: 0.5rem;
+      }
+      #stage {
+        display: none;
+        background: white;
+        color: black;
+        padding: 4rem 2rem;
+        text-align: center;
+        min-height: 100vh;
+      }
+      body.fs #stage {
+        display: block;
+      }
+      body.fs > :not(#stage) {
+        display: none;
+      }
+      #stage h2 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+      }
+      #stage p {
+        font-size: 1.1rem;
+      }
+      #stage code,
+      code {
+        background: #f5f5f5;
+        padding: 0 0.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Fullscreen permission prompt</h1>
+    <p>
+      On click, the page enters fullscreen and immediately requests the selected
+      permission. Use this to check how the browser handles a permission prompt
+      triggered while a document owns the fullscreen surface — e.g. whether it
+      forces an exit from fullscreen first, or whether the prompt is clearly
+      attributed to the page.
+    </p>
+
+    <p>
+      <button id="start-notification">
+        Fullscreen + <code>Notification.requestPermission()</code>
+      </button>
+      <button id="start-geolocation">
+        Fullscreen + <code>geolocation.getCurrentPosition()</code>
+      </button>
+    </p>
+
+    <p id="status"></p>
+
+    <div id="stage">
+      <h2>Fullscreen</h2>
+      <p id="stage-msg">Requesting permission…</p>
+    </div>
+
+    <script>
+      const statusEl = document.getElementById('status');
+      const stageMsg = document.getElementById('stage-msg');
+
+      async function enterFullscreen() {
+        try {
+          await document.body.requestFullscreen();
+        } catch (e) {
+          statusEl.textContent = `Fullscreen request rejected: ${e.message}`;
+          return false;
+        }
+        document.body.classList.add('fs');
+        return true;
+      }
+
+      async function exitFullscreen() {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        }
+        document.body.classList.remove('fs');
+      }
+
+      document
+        .getElementById('start-notification')
+        .addEventListener('click', async () => {
+          stageMsg.textContent = 'Requesting Notification.requestPermission()…';
+          if (!(await enterFullscreen())) return;
+
+          const result = await Notification.requestPermission();
+
+          await exitFullscreen();
+          statusEl.textContent = `Notification permission: ${result}`;
+          if (result === 'granted') {
+            new Notification('Notification permission granted.');
+          }
+        });
+
+      document
+        .getElementById('start-geolocation')
+        .addEventListener('click', async () => {
+          stageMsg.textContent = 'Requesting geolocation.getCurrentPosition()…';
+          if (!(await enterFullscreen())) return;
+
+          const result = await new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+              (pos) =>
+                resolve(
+                  `granted (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`,
+                ),
+              (err) => resolve(`error — ${err.message}`),
+            );
+          });
+
+          await exitFullscreen();
+          statusEl.textContent = `Geolocation: ${result}`;
+        });
+    </script>
+  </body>
+</html>

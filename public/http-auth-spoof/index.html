@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>
+      Overlay an HTTP Basic auth prompt on top of a foreign origin via a named
+      window
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 700px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      button {
+        padding: 0.5rem 1rem;
+      }
+      code {
+        background: #f5f5f5;
+        padding: 0 0.2rem;
+      }
+      label {
+        display: block;
+        margin: 0.5rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>HTTP auth prompt over foreign window</h1>
+    <p>
+      Opens a target site in a named popup, then — after a short delay —
+      navigates that same named window to a <code>401</code> endpoint on this
+      origin. The auth prompt appears attached to the popup, while the visible
+      document may still be the target site. Used to check how the browser
+      attributes the prompt to an origin.
+    </p>
+
+    <label>
+      Target URL (opened first in the popup):
+      <input
+        type="text"
+        id="target"
+        value="https://example.com/"
+        style="width: 100%; font-family: monospace"
+      />
+    </label>
+
+    <label>
+      Delay before swapping to the 401 response (ms):
+      <input type="number" id="delay" value="2000" min="0" max="30000" />
+    </label>
+
+    <p>
+      <button id="start">Open popup &amp; swap to auth prompt</button>
+    </p>
+
+    <p id="status"></p>
+
+    <script>
+      const statusEl = document.getElementById('status');
+
+      document.getElementById('start').addEventListener('click', () => {
+        const target = document.getElementById('target').value;
+        const delay = Number(document.getElementById('delay').value);
+
+        const popup = window.open(target, 'http-auth-spoof-popup');
+        if (!popup) {
+          statusEl.textContent =
+            'Popup blocked. Allow popups for this origin and try again.';
+          return;
+        }
+
+        statusEl.textContent = `Popup opened at ${target}. Swapping to auth prompt in ${delay}ms…`;
+
+        setTimeout(() => {
+          window.open('/basic-auth/', 'http-auth-spoof-popup');
+          statusEl.textContent = 'Swapped popup to 401 auth prompt.';
+        }, delay);
+      });
+    </script>
+  </body>
+</html>

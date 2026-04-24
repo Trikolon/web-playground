@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>
+      Triggers a single HTTP Basic auth prompt from an iframe while the document
+      is in fullscreen mode
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 700px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      button {
+        padding: 0.5rem 1rem;
+      }
+      code {
+        background: #f5f5f5;
+        padding: 0 0.2rem;
+      }
+      #stage {
+        display: none;
+      }
+      body.fs #stage {
+        display: block;
+        background: white;
+        min-height: 100vh;
+        padding: 2rem;
+      }
+      body.fs > :not(#stage) {
+        display: none;
+      }
+      #stage iframe {
+        width: 100%;
+        height: 60vh;
+        border: 1px solid #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Fullscreen + Basic auth prompt</h1>
+    <p>
+      On click, the page enters fullscreen and loads an iframe pointing at a
+      <code>401 WWW-Authenticate</code> endpoint on this origin. Use this to
+      check how the browser handles a blocking auth prompt from a subframe while
+      the top-level document owns the fullscreen surface.
+    </p>
+
+    <p>
+      <button id="start">Enter fullscreen and load 401 iframe</button>
+      <button id="stop" disabled>Exit</button>
+    </p>
+
+    <p id="status"></p>
+
+    <div id="stage">
+      <iframe id="frame" title="401 auth iframe"></iframe>
+    </div>
+
+    <script>
+      const statusEl = document.getElementById('status');
+      const frame = document.getElementById('frame');
+      const startBtn = document.getElementById('start');
+      const stopBtn = document.getElementById('stop');
+
+      async function stop() {
+        frame.src = 'about:blank';
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        }
+        document.body.classList.remove('fs');
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        statusEl.textContent = 'Stopped.';
+      }
+
+      startBtn.addEventListener('click', async () => {
+        try {
+          await document.body.requestFullscreen();
+        } catch (e) {
+          statusEl.textContent = `Fullscreen request rejected: ${e.message}`;
+          return;
+        }
+        document.body.classList.add('fs');
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        statusEl.textContent = '';
+
+        frame.src = `/basic-auth/?t=${Date.now()}`;
+      });
+
+      stopBtn.addEventListener('click', stop);
+
+      document.addEventListener('fullscreenchange', () => {
+        if (
+          !document.fullscreenElement &&
+          document.body.classList.contains('fs')
+        ) {
+          stop();
+        }
+      });
+    </script>
+  </body>
+</html>
