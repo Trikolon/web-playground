@@ -10,7 +10,7 @@
   "assets": {
     "directory": "./dist",
   },
-  "workers_dev": false,
+  "workers_dev": true,
   "observability": {
     "enabled": true,
   },
