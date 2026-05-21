@@ -1,0 +1,282 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Photo location from EXIF GPS data</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+        line-height: 1.6;
+        color: #333;
+      }
+      h1 {
+        margin-bottom: 0.25rem;
+      }
+      .intro {
+        color: #666;
+        margin-bottom: 1.5rem;
+      }
+      #dropzone {
+        border: 2px dashed #bbb;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        background: #fafafa;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+      #dropzone.dragover {
+        border-color: #0969da;
+        background: #e8f1fb;
+      }
+      #dropzone p {
+        margin: 0 0 1rem;
+        color: #666;
+      }
+      #fileInput {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      label[for='fileInput'] {
+        display: inline-block;
+        padding: 10px 20px;
+        background: #0969da;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 15px;
+      }
+      label[for='fileInput']:hover {
+        background: #0860c4;
+      }
+      #result {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        border-radius: 6px;
+        min-height: 1rem;
+      }
+      #result:empty {
+        display: none;
+      }
+      #result.info {
+        background: #e3f2fd;
+        color: #1565c0;
+      }
+      #result.success {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      #result.warn {
+        background: #fff3e0;
+        color: #ef6c00;
+      }
+      #result.error {
+        background: #ffebee;
+        color: #c62828;
+      }
+      #result .coords {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 15px;
+        margin: 0.25rem 0;
+      }
+      #result a {
+        color: inherit;
+        font-weight: 500;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          color: #e0e0e0;
+          background: #1a1a1a;
+        }
+        .intro {
+          color: #aaa;
+        }
+        #dropzone {
+          background: #242424;
+          border-color: #444;
+        }
+        #dropzone p {
+          color: #aaa;
+        }
+        #dropzone.dragover {
+          background: #1a2a3a;
+          border-color: #58a6ff;
+        }
+        #result.info {
+          background: #16324d;
+          color: #9ec6ff;
+        }
+        #result.success {
+          background: #1e3a23;
+          color: #aee3b3;
+        }
+        #result.warn {
+          background: #3a2a15;
+          color: #ffcf99;
+        }
+        #result.error {
+          background: #3a1a1a;
+          color: #ff9d9d;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Photo location from EXIF GPS data</h1>
+    <p class="intro">
+      Upload an image and this page will read its EXIF metadata in your browser
+      to find any embedded GPS coordinates. Nothing is uploaded to a server.
+      Supports JPG, PNG (with eXIf chunk), HEIC, TIFF, and WebP.
+    </p>
+
+    <div id="dropzone">
+      <p>Drop an image here, or</p>
+      <label for="fileInput">Choose image</label>
+      <input type="file" id="fileInput" accept="image/*" />
+    </div>
+
+    <div id="result"></div>
+
+    <script type="module">
+      import exifr, {
+        fileParsers,
+      } from 'https://cdn.jsdelivr.net/npm/exifr/+esm';
+
+      // Two bugs in exifr's stock HEIC detection that affect iPhone photos:
+      //   1. It only matches major/compatible brand "heic". iPhones use a mix
+      //      of HEIF brands (heix, mif1, MiHB, …).
+      //   2. It bails if the ftyp box is larger than 50 bytes, but Apple's HEIC
+      //      ftyp boxes are typically 52+ bytes (4+ compatible brands).
+      // Patch the static canHandle to widen both checks.
+      const heicParser = fileParsers.get('heic');
+      if (heicParser) {
+        const HEIF_BRANDS = new Set([
+          'heic',
+          'heix',
+          'heim',
+          'heis',
+          'mif1',
+          'msf1',
+          'mif2',
+          'hevc',
+          'hevx',
+          'avif',
+          'avis',
+        ]);
+        heicParser.canHandle = function (file, marker) {
+          if (marker !== 0) return false;
+          const ftypBoxSize = file.getUint32(0);
+          if (ftypBoxSize < 16 || ftypBoxSize > 512) return false;
+          if (file.getString(4, 4) !== 'ftyp') return false;
+          if (HEIF_BRANDS.has(file.getString(8, 4))) return true;
+          for (let offset = 16; offset + 4 <= ftypBoxSize; offset += 4) {
+            if (HEIF_BRANDS.has(file.getString(offset, 4))) return true;
+          }
+          return false;
+        };
+      }
+
+      const dropzone = document.getElementById('dropzone');
+      const fileInput = document.getElementById('fileInput');
+      const result = document.getElementById('result');
+
+      function setResult(html, kind) {
+        result.className = kind;
+        result.innerHTML = html;
+      }
+
+      async function handleFile(file) {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+          setResult(
+            `Not an image file (type: <code>${file.type || 'unknown'}</code>).`,
+            'error',
+          );
+          return;
+        }
+
+        setResult(`Reading EXIF from <strong>${file.name}</strong>…`, 'info');
+
+        try {
+          const gps = await exifr.gps(file);
+          if (
+            gps &&
+            Number.isFinite(gps.latitude) &&
+            Number.isFinite(gps.longitude)
+          ) {
+            const lat = gps.latitude.toFixed(6);
+            const lon = gps.longitude.toFixed(6);
+            const osm = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=15/${lat}/${lon}`;
+            setResult(
+              `<strong>GPS data found in ${escapeHtml(file.name)}</strong>
+               <p class="coords">Latitude: ${lat}<br>Longitude: ${lon}</p>
+               <a href="${osm}" target="_blank" rel="noopener">View on OpenStreetMap →</a>`,
+              'success',
+            );
+          } else {
+            setResult(
+              `No GPS data found in <strong>${escapeHtml(file.name)}</strong>.`,
+              'warn',
+            );
+          }
+        } catch (err) {
+          console.error('EXIF parse failed:', err);
+          setResult(
+            `Failed to read EXIF: ${escapeHtml(err.message || String(err))}`,
+            'error',
+          );
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              '&': '&amp;',
+              '<': '&lt;',
+              '>': '&gt;',
+              '"': '&quot;',
+              "'": '&#39;',
+            })[c],
+        );
+      }
+
+      fileInput.addEventListener('change', (e) => {
+        handleFile(e.target.files?.[0]);
+      });
+
+      ['dragenter', 'dragover'].forEach((evt) => {
+        dropzone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          dropzone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach((evt) => {
+        dropzone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          if (evt === 'dragleave' && e.target !== dropzone) return;
+          dropzone.classList.remove('dragover');
+        });
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer?.files?.[0];
+        handleFile(file);
+      });
+    </script>
+  </body>
+</html>
