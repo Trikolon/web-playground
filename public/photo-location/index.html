@@ -63,37 +63,85 @@
       }
       #result {
         margin-top: 1.5rem;
-        padding: 1rem;
-        border-radius: 6px;
-        min-height: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
       }
-      #result:empty {
-        display: none;
-      }
-      #result.info {
-        background: #e3f2fd;
-        color: #1565c0;
-      }
-      #result.success {
-        background: #e8f5e9;
-        color: #2e7d32;
-      }
-      #result.warn {
-        background: #fff3e0;
-        color: #ef6c00;
-      }
-      #result.error {
-        background: #ffebee;
-        color: #c62828;
-      }
-      #result .coords {
+      .file-card .coords {
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         font-size: 15px;
         margin: 0.25rem 0;
       }
-      #result a {
+      .file-card a {
         color: inherit;
         font-weight: 500;
+      }
+      .file-card {
+        padding: 1rem;
+        border-radius: 6px;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+      .file-card.info {
+        background: #e3f2fd;
+        color: #1565c0;
+      }
+      .file-card.success {
+        background: #e8f5e9;
+        color: #2e7d32;
+      }
+      .file-card.warn {
+        background: #fff3e0;
+        color: #ef6c00;
+      }
+      .file-card.error {
+        background: #ffebee;
+        color: #c62828;
+      }
+      .file-card .thumb {
+        flex: 0 0 96px;
+        width: 96px;
+        height: 96px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        font-size: 11px;
+        color: #888;
+        text-align: center;
+        padding: 4px;
+      }
+      .file-card .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .file-card .meta {
+        flex: 1;
+        min-width: 0;
+      }
+      .file-card .name {
+        font-weight: 600;
+        word-break: break-all;
+      }
+      .file-card .details {
+        font-size: 13px;
+        color: inherit;
+        opacity: 0.8;
+        margin-top: 2px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .file-card .body {
+        margin-top: 0.5rem;
+      }
+      @media (prefers-color-scheme: dark) {
+        .file-card .thumb {
+          background: rgba(255, 255, 255, 0.08);
+          color: #aaa;
+        }
       }
       @media (prefers-color-scheme: dark) {
         body {
@@ -114,19 +162,19 @@
           background: #1a2a3a;
           border-color: #58a6ff;
         }
-        #result.info {
+        .file-card.info {
           background: #16324d;
           color: #9ec6ff;
         }
-        #result.success {
+        .file-card.success {
           background: #1e3a23;
           color: #aee3b3;
         }
-        #result.warn {
+        .file-card.warn {
           background: #3a2a15;
           color: #ffcf99;
         }
-        #result.error {
+        .file-card.error {
           background: #3a1a1a;
           color: #ff9d9d;
         }
@@ -192,22 +240,91 @@
       const fileInput = document.getElementById('fileInput');
       const result = document.getElementById('result');
 
-      function setResult(html, kind) {
-        result.className = kind;
-        result.innerHTML = html;
+      function createCard(file) {
+        const ext = file?.name?.includes('.')
+          ? file.name.split('.').pop().toLowerCase()
+          : '(none)';
+        const type = file?.type || 'unknown';
+        const size = file ? formatBytes(file.size) : '';
+
+        const card = document.createElement('div');
+        card.className = 'file-card';
+
+        const thumb = document.createElement('div');
+        thumb.className = 'thumb';
+        if (file && file.type.startsWith('image/')) {
+          const url = URL.createObjectURL(file);
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = '';
+          // Some formats can't be decoded by the browser (e.g. HEIC outside
+          // Safari and recent macOS/Windows Firefox); fall back to a label.
+          img.addEventListener('error', () => {
+            const span = document.createElement('span');
+            span.textContent = '.' + ext;
+            img.replaceWith(span);
+          });
+          // Release the blob URL once the browser has the bytes.
+          img.addEventListener('load', () => URL.revokeObjectURL(url), {
+            once: true,
+          });
+          thumb.append(img);
+        } else {
+          const span = document.createElement('span');
+          span.textContent = '.' + ext;
+          thumb.append(span);
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'name';
+        nameEl.textContent = file?.name || '(no file)';
+
+        const detailsEl = document.createElement('div');
+        detailsEl.className = 'details';
+        detailsEl.textContent = `.${ext} · ${type} · ${size}`;
+
+        const body = document.createElement('div');
+        body.className = 'body';
+
+        meta.append(nameEl, detailsEl, body);
+        card.append(thumb, meta);
+        result.prepend(card);
+
+        return { card, body };
+      }
+
+      function setCardState(card, body, kind, populateBody) {
+        card.className = 'file-card ' + kind;
+        body.replaceChildren();
+        populateBody(body);
+      }
+
+      function textBody(text) {
+        return (body) => {
+          body.textContent = text;
+        };
+      }
+
+      function formatBytes(bytes) {
+        if (!Number.isFinite(bytes)) return '';
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
       }
 
       async function handleFile(file) {
         if (!file) return;
+        const { card, body } = createCard(file);
+
         if (!file.type.startsWith('image/')) {
-          setResult(
-            `Not an image file (type: <code>${file.type || 'unknown'}</code>).`,
-            'error',
-          );
+          setCardState(card, body, 'error', textBody('Not an image file.'));
           return;
         }
 
-        setResult(`Reading EXIF from <strong>${file.name}</strong>…`, 'info');
+        setCardState(card, body, 'info', textBody('Reading EXIF…'));
 
         try {
           const gps = await exifr.gps(file);
@@ -218,40 +335,43 @@
           ) {
             const lat = gps.latitude.toFixed(6);
             const lon = gps.longitude.toFixed(6);
-            const osm = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=15/${lat}/${lon}`;
-            setResult(
-              `<strong>GPS data found in ${escapeHtml(file.name)}</strong>
-               <p class="coords">Latitude: ${lat}<br>Longitude: ${lon}</p>
-               <a href="${osm}" target="_blank" rel="noopener">View on OpenStreetMap →</a>`,
-              'success',
-            );
+            setCardState(card, body, 'success', (body) => {
+              const heading = document.createElement('strong');
+              heading.textContent = 'GPS data found';
+
+              const coords = document.createElement('p');
+              coords.className = 'coords';
+              coords.append(
+                `Latitude: ${lat}`,
+                document.createElement('br'),
+                `Longitude: ${lon}`,
+              );
+
+              const link = document.createElement('a');
+              link.href = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=15/${lat}/${lon}`;
+              link.target = '_blank';
+              link.rel = 'noopener';
+              link.textContent = 'View on OpenStreetMap →';
+
+              body.append(heading, coords, link);
+            });
           } else {
-            setResult(
-              `No GPS data found in <strong>${escapeHtml(file.name)}</strong>.`,
+            setCardState(
+              card,
+              body,
               'warn',
+              textBody('No GPS data found in this image.'),
             );
           }
         } catch (err) {
           console.error('EXIF parse failed:', err);
-          setResult(
-            `Failed to read EXIF: ${escapeHtml(err.message || String(err))}`,
+          setCardState(
+            card,
+            body,
             'error',
+            textBody(`Failed to read EXIF: ${err.message || String(err)}`),
           );
         }
-      }
-
-      function escapeHtml(s) {
-        return String(s).replace(
-          /[&<>"']/g,
-          (c) =>
-            ({
-              '&': '&amp;',
-              '<': '&lt;',
-              '>': '&gt;',
-              '"': '&quot;',
-              "'": '&#39;',
-            })[c],
-        );
       }
 
       fileInput.addEventListener('change', (e) => {
